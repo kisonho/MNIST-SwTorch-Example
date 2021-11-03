@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "PythonKit",
+        "repositoryURL": "https://github.com/pvieito/PythonKit.git",
+        "state": {
+          "branch": "master",
+          "revision": "86ce684b005aee7cea847568c6ab82079794f29b",
+          "version": null
+        }
+      },
+      {
+        "package": "SwTorch",
+        "repositoryURL": "https://github.com/kisonho/SwTorch.git",
+        "state": {
+          "branch": "Beta",
+          "revision": "f724958fbbc4e3c2e03ab23e7911985d578533e7",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
