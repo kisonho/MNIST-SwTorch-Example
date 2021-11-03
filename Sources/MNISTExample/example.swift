@@ -22,7 +22,7 @@ struct MNISTTraining {
         // initialize training manager
         var manager = MNISTTrainingManager(model)
         let results = try manager.train(trainingDatasetLoader: trainingDataset, epochs: 10, validationDatasetLoader: valDataset)!
-        print("Final results: loss=\(results["loss"]!), acc=\(results["acc"]!)")
+        print("Final results: loss=\(results["loss"]!), acc=\(results["accuracy"]!)")
     }
 }
 
@@ -37,7 +37,7 @@ class MNISTTrainingManager: TrainingManager {
     var device: Device
     
     /// The PyTorch loss function
-    var lossFn = torch.nn.CrossEntropyLoss()
+    var lossFn = torch.nn.CrossEntropyLoss().to(torch.device("cuda"))
     
     var lrScheduler: ExponentionLr<OptimizerType>? = nil
     
@@ -53,18 +53,19 @@ class MNISTTrainingManager: TrainingManager {
     ///   - device: Target `Device` of module
     init(_ model: PyModule, device: Device = .cuda) {
         self.model = model
+        self.model.to(device)
         self.device = device
-        self.optimizer = PyOptimizer(torch.optim.SGD(self.model.pyParameters, lr: 0.01, momentum: 0.9))!
+        self.optimizer = PyOptimizer(torch.optim.SGD(self.model.parameters, lr: 0.01, momentum: 0.9))!
     }
     
     func calculateMetrics(yTrue: Tensor, yPred: Tensor) -> [String : Float] {
-        let y = yTrue.argmax(axis: 1)
-        let acc = Float(Tensor(torch.sum(y == yTrue))!.mean(axis: 1))!
+        let y = yPred.argmax(axis: 1)
+        let acc = Float(torch.eq(y, yTrue).float().mean())!
         return ["accuracy": acc]
     }
     
     func calculateLoss(yTrue: Tensor, yPred: Tensor) -> Tensor {
-        return Tensor(lossFn(yPred, yTrue))!
+        return Tensor(lossFn(yPred, yTrue))
     }
     
     func onBatchEnd(batch: Int, result: [String : Float]) {
@@ -72,11 +73,11 @@ class MNISTTrainingManager: TrainingManager {
     }
     
     func onEpochStart(epoch: Int, totalEpochs: Int) {
-        print("Training \(epoch)/\(totalEpochs)")
+        print("Training \(epoch + 1)/\(totalEpochs)")
     }
     
     func onEpochEnd(epoch: Int, totalEpochs: Int, trainingResult: [String : Float], valResult: [String : Float]?) -> Bool {
-        print("Epoch \(epoch)/\(totalEpochs): loss=\(valResult!["loss"]!), acc=\(valResult!["accuracy"]!)")
+        print("Epoch \(epoch + 1)/\(totalEpochs): loss=\(valResult!["loss"]!), acc=\(valResult!["accuracy"]!)")
         return true
     }
 }
