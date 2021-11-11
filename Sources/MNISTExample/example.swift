@@ -21,13 +21,13 @@ struct MNISTTraining {
         
         // initialize training manager
         var manager = MNISTTrainingManager(model)
-        let results = try manager.train(trainingDatasetLoader: trainingDataset, epochs: 10, validationDatasetLoader: valDataset)!
+        let results = try manager.train(trainingDataset: trainingDataset, epochs: 10, validationDataset: valDataset)!
         print("Final results: loss=\(results["loss"]!), acc=\(results["accuracy"]!)")
     }
 }
 
 /// The main training manager
-class MNISTTrainingManager: TrainingManager {
+class MNISTTrainingManager: Training {
     typealias LrSchedulerType = ExponentionLr<OptimizerType>
     
     typealias OptimizerType = PyOptimizer
