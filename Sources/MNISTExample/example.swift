@@ -21,13 +21,14 @@ struct MNISTTraining {
         
         // initialize training manager
         var manager = MNISTTrainingManager(model)
-        let results = try manager.train(trainingDatasetLoader: trainingDataset, epochs: 10, validationDatasetLoader: valDataset)!
+        let results = try manager.train(trainingDataset: trainingDataset, epochs: 10, validationDataset: valDataset)!
         print("Final results: loss=\(results["loss"]!), acc=\(results["accuracy"]!)")
     }
 }
 
 /// The main training manager
-class MNISTTrainingManager: TrainingManager {
+class MNISTTrainingManager: Training {
+    
     typealias LrSchedulerType = ExponentionLr<OptimizerType>
     
     typealias OptimizerType = PyOptimizer
@@ -36,8 +37,8 @@ class MNISTTrainingManager: TrainingManager {
     
     var device: Device
     
-    /// The PyTorch loss function
-    var lossFn = torch.nn.CrossEntropyLoss().to(torch.device("cuda"))
+    /// The loss function
+    var lossFn = CrossEntropyLoss()
     
     var lrScheduler: ExponentionLr<OptimizerType>? = nil
     
@@ -59,13 +60,13 @@ class MNISTTrainingManager: TrainingManager {
     }
     
     func calculateMetrics(yTrue: Tensor, yPred: Tensor) -> [String : Float] {
-        let y = yPred.argmax(axis: 1)
-        let acc = Float(torch.eq(y, yTrue).float().mean())!
+        let y = yPred.argmax(dim: 1)
+        let acc = Float(y.equal(yTrue).to(dtype: .float32).mean())!
         return ["accuracy": acc]
     }
     
     func calculateLoss(yTrue: Tensor, yPred: Tensor) -> Tensor {
-        return Tensor(lossFn(yPred, yTrue))
+        return lossFn(yTrue: yTrue, yPred: yPred)
     }
     
     func onBatchEnd(batch: Int, result: [String : Float]) {
@@ -74,10 +75,43 @@ class MNISTTrainingManager: TrainingManager {
     
     func onEpochStart(epoch: Int, totalEpochs: Int) {
         print("Training \(epoch + 1)/\(totalEpochs)")
+        model.train()
     }
     
     func onEpochEnd(epoch: Int, totalEpochs: Int, trainingResult: [String : Float], valResult: [String : Float]?) -> Bool {
         print("Epoch \(epoch + 1)/\(totalEpochs): loss=\(valResult!["loss"]!), acc=\(valResult!["accuracy"]!)")
         return true
+    }
+    
+    func onValStart() {
+        model.eval()
+        return
+    }
+    
+    func trainStep(_ xTrain: Tensor, _ yTrain: Tensor) -> [String : Float] {
+        // forward pass
+        let y = model(xTrain)
+        let loss = calculateLoss(yTrue: yTrain, yPred: y)
+        
+        // backward pass
+        optimizer.zeroGrad(setToNone: false)
+        loss.backward()
+        optimizer.step()
+        
+        // summarize
+        var summary = calculateMetrics(yTrue: yTrain, yPred: y)
+        summary["loss"] = Float(loss.mean())
+        return summary
+    }
+    
+    func valStep(_ xTest: Tensor, _ yTest: Tensor) -> [String : Float] {
+        // forward pass
+        let y = model(xTest)
+        let loss = calculateLoss(yTrue: yTest, yPred: y)
+        
+        // summarize
+        var summary = calculateMetrics(yTrue: yTest, yPred: y)
+        summary["loss"] = Float(loss.mean())
+        return summary
     }
 }
