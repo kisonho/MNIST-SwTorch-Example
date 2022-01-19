@@ -3,7 +3,12 @@ import os, torchvision
 from typing import Tuple
 from torch.utils.data import DataLoader
 
-def loadMNIST() -> Tuple[DataLoader]:
+def loadMNIST() -> Tuple[DataLoader, DataLoader]:
+    '''
+    Load MNIST dataset
+
+    - Returns: A `tuple` of training `DataLoader` and testing `DataLoader`
+    '''
     transform = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(), 
         torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))

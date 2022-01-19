@@ -14,7 +14,7 @@
         "package": "SwTorch",
         "repositoryURL": "https://github.com/kisonho/SwTorch.git",
         "state": {
-          "branch": "Beta",
+          "branch": "main",
           "revision": "05d954ff0c09a4429bcf19087b0b79f0c88fdc55",
           "version": null
         }

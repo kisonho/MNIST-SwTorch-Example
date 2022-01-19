@@ -3,6 +3,7 @@ import torch
 from torch.nn import functional as F
 
 class CNN(torch.nn.Module):
+    '''The basic CNN `torch.nn.Module'''
     # layers
     conv1: torch.nn.Conv2d
     pool1: torch.nn.MaxPool2d
@@ -13,8 +14,8 @@ class CNN(torch.nn.Module):
     fc1: torch.nn.Linear
     classification: torch.nn.Linear
     
-    # constructor
-    def __init__():
+    def __init__(self) -> None:
+        '''Constructor'''
         super().__init__()
         
         # initialize layers
@@ -27,8 +28,14 @@ class CNN(torch.nn.Module):
         self.fc1 = torch.nn.Linear(256, 512)
         self.classification = torch.nn.Linear(512, 10)
 
-    # forward
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        '''
+        Forward method
+
+        - Parameters:
+            - x: The input `torch.Tensor`
+        - Returns: The output `torch.Tensor`
+        '''
         x = self.conv1(x)
         x = F.relu(x)
         x = self.pool1(x)
